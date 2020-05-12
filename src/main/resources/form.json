@@ -1,0 +1,18 @@
+[
+	{
+		"type": "number",
+		"required": false,
+		"label": "金额",
+		"className": "form-control",
+		"name": "je",
+		"access": false
+	},
+	{
+		"type": "date",
+		"required": false,
+		"label": "日期",
+		"className": "form-control",
+		"name": "date",
+		"access": false
+	}
+]

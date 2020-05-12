@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+<!-- Required meta tags -->
+<meta charset="utf-8">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet"
+	href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+	integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+	crossorigin="anonymous">
+
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<div class="col-md-8">
+				<div class="alert alert-info">
+					点击 <a th:href="@{/login}">这里</a>切换用户
+				</div>
+				<div th:unless="${#lists.isEmpty(definitions)}">
+					<h3>流程定义</h3>
+					<table class="table">
+						<tr>
+							<th>流程定义</th>
+							<th>操作</th>
+						</tr>
+						<tr th:each="definition : ${definitions}">
+							<td th:text="${definition.key}">流程定义</td>
+							<td><a th:href="@{/startProcess?id=}+${definition.id}">开始流程</a></td>
+						</tr>
+					</table>
+				</div>
+
+				<div th:unless="${#lists.isEmpty(tasks)}">
+					<h3>待处理的任务</h3>
+					<table class="table">
+						<tr>
+							<th>任务ID</th>
+							<th>操作</th>
+						</tr>
+						<tr th:each="task : ${tasks}">
+							<td th:text="${task.taskId}">任务ID</td>
+							<td><a th:href="@{/startTask?id=}+${task.taskId}">审批</a></td>
+						</tr>
+					</table>
+				</div>
+
+				<div th:unless="${#lists.isEmpty(historicTasks)}">
+					<h3>历史任务</h3>
+					<table class="table">
+						<tr>
+							<th>任务ID</th>
+							<th>审批时间</th>
+							<th>状态</th>
+						</tr>
+						<tr th:each="task : ${historicTasks}">
+							<td th:text="${task.taskId}">流程定义</td>
+							<td
+								th:text="${#dates.format(task.endTime, 'yyyy-MM-dd HH:mm:ss')}">流程定义</td>
+							<td
+								th:text="${task.status == null ?  '未知' : task.status == 'approve' ? '通过':'拒绝'}">流程定义</td>
+						</tr>
+					</table>
+				</div>
+
+				<div th:unless="${#lists.isEmpty(historicProcesses)}">
+					<h3>我的流程</h3>
+					<table class="table">
+						<tr>
+							<th>开始时间</th>
+							<th>状态</th>
+							<th></th>
+						</tr>
+						<tr th:each="process : ${historicProcesses}">
+							<td
+								th:text="${#dates.format(process.instance.startTime, 'yyyy-MM-dd HH:mm:ss')}">流程定义</td>
+							<td
+								th:text="${process.instance.endTime == null ? '处理中' : process.status == 'approve' ? '通过' : '拒绝'}"></td>
+							<td><a href="###" th:data-flow="${process.instance.id}">查看处理流程</a></td>
+						</tr>
+					</table>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+	<div class="modal " tabindex="-1" role="dialog" id="flowModal">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body" id="flow-body"></div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary"
+						data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Optional JavaScript -->
+	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+	<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+		integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+		crossorigin="anonymous"></script>
+	<script
+		src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+		integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+		crossorigin="anonymous"></script>
+	<script>
+		$('[data-flow]').click(function() {
+			var id = $(this).data('flow');
+			$.get('process/' + id + '/flow', {}, function(data) {
+				var html = '<table class="table">';
+				html += '<tr><td>任务名称</td><td>审批人</td><td>任务开始时间</td><td>任务结束时间</td><td>处理状态</td><td>备注</td></tr>'
+				for(const d of data){
+					html += '<tr><td>'+d.name+'</td><td>'+d.assignee+'</td><td>'+d.startTime+'</td><td>'+(d.endTime ? d.endTime : '')+'</td><td>'+(d.status ? (d.status == 'approve' ? '通过':'拒绝') : '处理中')+'</td><td>'+d.comments.join('<br>')+'</td></tr>'
+				}
+				html += '</table>';
+				$("#flow-body").html(html);
+				$("#flowModal").modal('show')
+			})
+		})
+	</script>
+</body>
+</html>
