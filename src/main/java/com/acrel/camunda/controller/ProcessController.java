@@ -7,6 +7,9 @@ import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
 import org.camunda.bpm.engine.history.HistoricVariableInstance;
 import org.camunda.bpm.engine.task.Comment;
+import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.camunda.bpm.model.bpmn.instance.SubProcess;
+import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -55,6 +58,12 @@ public class ProcessController {
         String output = (String) map.remove("_output");
         HistoricTaskInstance task = engine.getHistoryService().createHistoricTaskInstanceQuery().taskId(taskId)
                 .singleResult();
+
+        List<SubProcess> subProcesses = getAllSubProcesses(engine, task);
+        for (SubProcess subProcess : subProcesses) {
+            map.put(subProcess.getId(), output);
+        }
+
         map.put(task.getTaskDefinitionKey(), output);
         map.put(task.getProcessDefinitionKey(), output);
         map.put(task.getId(), output);
@@ -63,6 +72,20 @@ public class ProcessController {
             engine.getTaskService().createComment(taskId, task.getProcessInstanceId(), comment);
         engine.getFormService().submitTaskForm(taskId, map);
         return "redirect:/";
+    }
+
+    private List<SubProcess> getAllSubProcesses(ProcessEngine engine, HistoricTaskInstance task) {
+        List<SubProcess> list = new ArrayList<>();
+        BpmnModelInstance instance = engine.getRepositoryService().getBpmnModelInstance(task.getProcessDefinitionId());
+        ModelElementInstance taskInstance = instance.getModelElementById(task.getTaskDefinitionKey());
+        ModelElementInstance parent = taskInstance.getParentElement();
+        while (parent != null) {
+            if (parent instanceof SubProcess) {
+                list.add((SubProcess) parent);
+            }
+            parent = parent.getParentElement();
+        }
+        return list;
     }
 
     @GetMapping("process/{id}/flow")
